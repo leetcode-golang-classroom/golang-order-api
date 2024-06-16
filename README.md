@@ -138,3 +138,6 @@ case <-ctx.Done():
 ```
 
 explain: select could listen multiple channel for signal notify
+
+## setup redis repostiory
+
