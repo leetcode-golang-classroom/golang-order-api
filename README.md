@@ -111,3 +111,30 @@ if err != nil {
 	return fmt.Errorf("failed to connect redis: %w", err)
 }
 ```
+## setup graceful shutdown with context
+
+use context api to notify signal from parent to child goroutine
+
+![cancel-signal](cancel-signal.png)
+
+1. setup signal capture in main.go
+```golang
+ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+defer cancel()
+err := app.Start(ctx)
+```
+
+2. setup listener for ctx cancel event
+
+```golang
+select {
+case err = <-ch:
+	return err
+case <-ctx.Done():
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	return server.Shutdown(timeout)
+}
+```
+
+explain: select could listen multiple channel for signal notify
