@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -16,8 +17,15 @@ import (
 	"github.com/leetcode-golang-classroom/golang-order-api/internal/util"
 )
 
+type Repo interface {
+	Insert(ctx context.Context, order model.Order) error
+	FindByID(ctx context.Context, id uint64) (model.Order, error)
+	DeleteByID(ctx context.Context, id uint64) error
+	Update(ctx context.Context, order model.Order) error
+	FindAll(ctx context.Context, page order.FindAllPage) (order.FindResult, error)
+}
 type Order struct {
-	Repo *order.RedisRepo
+	Repo Repo
 }
 
 func (o *Order) Create(w http.ResponseWriter, r *http.Request) {
