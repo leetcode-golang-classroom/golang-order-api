@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/leetcode-golang-classroom/golang-order-api/internal/model"
 	"github.com/redis/go-redis/v9"
@@ -43,6 +44,7 @@ var ErrNotExist = errors.New("order does not exist")
 
 func (r *RedisRepo) FindByID(ctx context.Context, id uint64) (model.Order, error) {
 	key := orderIDKey(id)
+	log.Println("key", key)
 	value, err := r.Client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
 		return model.Order{}, ErrNotExist
@@ -95,8 +97,8 @@ func (r *RedisRepo) Update(ctx context.Context, order model.Order) error {
 }
 
 type FindAllPage struct {
-	Size   uint
-	Offset uint
+	Size   uint64
+	Offset uint64
 }
 type FindResult struct {
 	Orders []model.Order
@@ -104,7 +106,8 @@ type FindResult struct {
 }
 
 func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, error) {
-	res := r.Client.SScan(ctx, "orders", uint64(page.Offset), "*", int64(page.Size))
+	// res := r.Client.SScan(ctx, "orders", page.Offset, "order:*", int64(page.Size))
+	res := r.Client.Scan(ctx, page.Offset, "order:*", int64(page.Size))
 	keys, cursor, err := res.Result()
 	if err != nil {
 		return FindResult{}, fmt.Errorf("failed to get order ids: %w", err)
